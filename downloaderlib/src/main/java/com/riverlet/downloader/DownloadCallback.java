@@ -19,6 +19,6 @@ public abstract class DownloadCallback {
     public void onFailure() {
     }
 
-    public void onError() {
+    public void onError(int errorCode,String errorMessage) {
     }
 }

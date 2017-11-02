@@ -35,7 +35,9 @@ public class Downloader {
     private long offset = 0L;
     private boolean isCanResume = true;
     private boolean isPause = true;
-    private boolean isFinished;
+    private boolean isFinished = false;
+    private boolean isRepeatIfFileExist = false;
+    private String fileName;
     private File file;
 
     private Downloader(String url, File file) {
@@ -44,6 +46,7 @@ public class Downloader {
         if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
+        fileName = file.getName();
         if (isCanResume) {
             offset = RecordManager.getInstance().getLong(url);
             Log.d(TAG, url + "已下载：" + offset);
@@ -54,7 +57,7 @@ public class Downloader {
         if (TextUtils.isEmpty(url)) {
             throw new NullPointerException("URL can't be empty !");
         }
-        String name = url.substring(url.lastIndexOf('/'));
+        String name = url.substring(url.lastIndexOf('/') + 1);
         return newDownloader(url, name);
     }
 
@@ -71,8 +74,32 @@ public class Downloader {
         return download(offset, null);
     }
 
-    private Downloader download(final long start, final Object total) {
+    private Downloader download(long start, Object total) {
+        int status = DownloadersStatusManager.get(url);
+        switch (status) {
+            case DownloadersStatusManager.READY:
+                if (file.exists() && start == 0) {
+                    file.delete();
+                }
+                realDownload(start, total);
+                break;
+            case DownloadersStatusManager.DOWNLOADING:
+                downloadCallback.onError(DownloadersStatusManager.DOWNLOADING, "文件已经开始下载");
+                break;
+            case DownloadersStatusManager.ALREADY_EXIST:
+                if (isRepeatIfFileExist) {
+                    realDownload(start, total);
+                }
+                downloadCallback.onError(DownloadersStatusManager.ALREADY_EXIST, "文件已经存在");
+                break;
+        }
+
+        return this;
+    }
+
+    private Downloader realDownload(final long start, final Object total) {
         isPause = false;
+        DownloadersStatusManager.put(url, DownloadersStatusManager.DOWNLOADING);
         Observable<DownloadData> observable = Observable.create(new ObservableOnSubscribe<DownloadData>() {
             @Override
             public void subscribe(@NonNull ObservableEmitter<DownloadData> emitter) throws Exception {
@@ -134,51 +161,56 @@ public class Downloader {
                 } else if (response.getCode() == FAILURE) {
                     emitter.onError(new Throwable("FAILURE"));
                 } else if (response.getCode() == ERROR) {
-                    emitter.onError(new Throwable("ERROR"));
+                    emitter.onError(new Throwable("ERROR"+response.getMessage()));
                 }
             }
         });
-        final String fileName = file.getName();
-        Observer<DownloadData> observer = new Observer<DownloadData>() {
-            @Override
-            public void onSubscribe(Disposable d) {
-                Log.d(TAG, "subscribe");
-            }
 
-            @Override
-            public void onNext(DownloadData value) {
-                if (downloadCallback != null) {
-                    downloadCallback.onProgress(fileName, value.getTotal(), value.getCurrent(), value.getPercentage());
-                    if (value.getPercentage() == 100) {
-                        downloadCallback.onComplete(file);
-                    }
-                }
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                Log.d(TAG, e.toString());
-                if (downloadCallback != null) {
-                    if (TextUtils.equals(e.getMessage(), "ERROR")) {
-                        downloadCallback.onError();
-                    } else {
-                        downloadCallback.onFailure();
-                    }
-                }
-            }
-
-            @Override
-            public void onComplete() {
-                isFinished = true;
-                Log.d(TAG, "complete");
-            }
-        };
         //建立连接
         observable.subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(observer);
         return this;
     }
+
+
+    private Observer<DownloadData> observer = new Observer<DownloadData>() {
+        @Override
+        public void onSubscribe(Disposable d) {
+            Log.d(TAG, "subscribe");
+        }
+
+        @Override
+        public void onNext(DownloadData value) {
+            if (downloadCallback != null) {
+                downloadCallback.onProgress(fileName, value.getTotal(), value.getCurrent(), value.getPercentage());
+                if (value.getPercentage() == 100) {
+                    downloadCallback.onComplete(file);
+                }
+            }
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            Log.d(TAG, e.toString());
+            if (downloadCallback != null) {
+                String msg = e.getMessage();
+                if (e.getMessage().startsWith("ERROR")) {
+                    downloadCallback.onError(ERROR, msg.substring("ERROR".length()));
+                } else {
+                    downloadCallback.onFailure();
+                }
+            }
+            DownloadersStatusManager.put(url, DownloadersStatusManager.READY);
+        }
+
+        @Override
+        public void onComplete() {
+            isFinished = true;
+            Log.d(TAG, "complete");
+            DownloadersStatusManager.put(url, DownloadersStatusManager.ALREADY_EXIST);
+        }
+    };
 
     public void pause() {
         isPause = true;

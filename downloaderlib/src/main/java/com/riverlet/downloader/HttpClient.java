@@ -40,12 +40,12 @@ public class HttpClient {
         DownloadResponse downloadResponse = new DownloadResponse();
         String range = "bytes=" + start + "-" + (total == null ? "" : total);
         Log.d(TAG, "range:" + range);
-        Request request = new Request.Builder().
-                url(url).
-                addHeader("Range", range).
-                get().
-                build();
         try {
+            Request request = new Request.Builder().
+                    url(url).
+                    addHeader("Range", range).
+                    get().
+                    build();
             Response response = okHttpClient.newCall(request).execute();
             if (response.isSuccessful()) {
                 downloadResponse.setCode(Downloader.OK);
@@ -57,6 +57,11 @@ public class HttpClient {
         } catch (IOException e) {
             e.printStackTrace();
             downloadResponse.setCode(Downloader.ERROR);
+            downloadResponse.setMessage("下载出错");
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            downloadResponse.setCode(Downloader.ERROR);
+            downloadResponse.setMessage("Url不合法");
         }
         return downloadResponse;
     }

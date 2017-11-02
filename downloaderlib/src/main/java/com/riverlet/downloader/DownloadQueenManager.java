@@ -17,22 +17,22 @@ import io.reactivex.schedulers.Schedulers;
  * Despribe:
  */
 
-public class DownloadManager {
+public class DownloadQueenManager {
 
-    private static volatile DownloadManager instance;
+    private static volatile DownloadQueenManager instance;
     private static Queue<Downloader> downloaderQueue = new LinkedList<>();
     private boolean stop = false;
     private long time;
 
-    private DownloadManager() {
+    private DownloadQueenManager() {
         start();
     }
 
-    public static DownloadManager getInstance() {
+    public static DownloadQueenManager getInstance() {
         if (instance == null) {
-            synchronized (DownloadManager.class) {
+            synchronized (DownloadQueenManager.class) {
                 if (instance == null) {
-                    instance = new DownloadManager();
+                    instance = new DownloadQueenManager();
                 }
             }
         }

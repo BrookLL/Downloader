@@ -12,6 +12,7 @@ import java.io.InputStream;
 public class DownloadResponse {
 
     private int code;
+    private String message;
     private long total;
     private InputStream inputStream;
 
@@ -21,6 +22,14 @@ public class DownloadResponse {
 
     public void setCode(int code) {
         this.code = code;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     public long getTotal() {
