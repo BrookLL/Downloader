@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private EditText fileEdit;
     private Downloader downloader;
     private boolean isOpen;
-    String url = "http://ucdl.25pp.com/fs01/union_pack/Wandoujia_194547_web_seo_baidu_homepage.apk";
+    private String defaultUrl = "http://ucdl.25pp.com/fs01/union_pack/Wandoujia_194547_web_seo_baidu_homepage.apk";
 
     @TargetApi(Build.VERSION_CODES.M)
     @Override
@@ -50,8 +50,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         progressBar = bindView(R.id.progress);
         urlEdit = bindView(R.id.edit_url);
         fileEdit = bindView(R.id.edit_file);
-        urlEdit.setHint(url);
-        String fileName = url.substring(url.lastIndexOf('/') + 1);
+        urlEdit.setHint(defaultUrl);
+        String fileName = defaultUrl.substring(defaultUrl.lastIndexOf('/') + 1);
         fileEdit.setText(DownloadConfig.getRootPath() + fileName);
         fileNameText.setText("文件名：" + fileName);
 
@@ -80,6 +80,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     fileEdit.setSelection(sdcard.length());
                     Toast.makeText(MainActivity.this, "请设置正确的文件路径", Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+
+        urlEdit.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                String url = editable.toString();
+               if (url.lastIndexOf('/')>0){
+                   String fileName = url.substring(url.lastIndexOf('/') + 1);
+                   fileEdit.setText(DownloadConfig.getRootPath() + fileName);
+                   fileNameText.setText("文件名：" + fileName);
+               }
+               if (url.length()==0){
+                   String fileName = defaultUrl.substring(url.lastIndexOf('/') + 1);
+                   fileEdit.setText(DownloadConfig.getRootPath() + fileName);
+                   fileNameText.setText("文件名：" + fileName);
+               }
             }
         });
     }
@@ -116,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void download() {
         String url = urlEdit.getText().toString();
         if (TextUtils.isEmpty(url)) {
-            url = this.url;
+            url = this.defaultUrl;
         }
 
         File file = new File(fileEdit.getText().toString());
