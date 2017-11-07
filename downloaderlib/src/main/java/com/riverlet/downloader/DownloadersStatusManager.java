@@ -17,10 +17,22 @@ public class DownloadersStatusManager {
     public static final int PAUSE = 104;
     private static Map<String, Integer> downloadStausMap = new HashMap<>();
 
+    /**
+     * 储存下载状态
+     *
+     * @param url
+     * @param status
+     */
     public static void put(String url, int status) {
         downloadStausMap.put(url, status);
     }
 
+    /**
+     * 获取下载状态
+     *
+     * @param url
+     * @return
+     */
     public static int get(String url) {
         if (!downloadStausMap.containsKey(url)) {
             return READY;

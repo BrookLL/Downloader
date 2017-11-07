@@ -48,11 +48,19 @@ public class Downloader {
         }
         fileName = file.getName();
         if (isCanResume) {
+            //读取下载进度
             offset = RecordManager.getInstance().getLong(url);
             Log.d(TAG, url + "已下载：" + offset);
         }
     }
 
+    /**
+     * 获取实例
+     * 默认在Android系统的下载目录创建文件
+     *
+     * @param url 下载链接
+     * @return
+     */
     public static Downloader newDownloader(String url) {
         if (TextUtils.isEmpty(url)) {
             throw new NullPointerException("URL can't be empty !");
@@ -61,10 +69,26 @@ public class Downloader {
         return newDownloader(url, name);
     }
 
+    /**
+     * 获取实例
+     * 会默认在Android系统的下载目录根据指定文件名创建文件
+     *
+     * @param url  下载链接
+     * @param name 文件名
+     * @return
+     */
     public static Downloader newDownloader(String url, String name) {
         return newDownloader(url, new File(DownloadConfig.getRootPath(), name));
     }
 
+    /**
+     * 获取实例
+     * 根据指定路径创建文件
+     *
+     * @param url  下载链接
+     * @param file 文件路径
+     * @return
+     */
     public static Downloader newDownloader(String url, File file) {
         Downloader downloader = new Downloader(url, file);
         return downloader;
@@ -75,6 +99,7 @@ public class Downloader {
     }
 
     private Downloader download(long start, Object total) {
+        //根据不用状态分配任务
         int status = DownloadersStatusManager.get(url);
         switch (status) {
             case DownloadersStatusManager.READY:
@@ -93,7 +118,7 @@ public class Downloader {
                 downloadCallback.onError(DownloadersStatusManager.ALREADY_EXIST, "文件已经存在");
                 break;
             case DownloadersStatusManager.PAUSE:
-                realDownload(start,total);
+                realDownload(start, total);
                 break;
         }
 
@@ -157,9 +182,10 @@ public class Downloader {
                             } else {
                                 offset = 0;
                             }
+                            //储存下载进度
                             RecordManager.getInstance().put(url, offset);
                         }
-                        if (isPause){
+                        if (isPause) {
                             DownloadersStatusManager.put(url, DownloadersStatusManager.PAUSE);
                         }
                     }
@@ -179,7 +205,9 @@ public class Downloader {
         return this;
     }
 
-
+    /**
+     * 下载调度处理
+     */
     private Observer<DownloadData> observer = new Observer<DownloadData>() {
         @Override
         public void onSubscribe(Disposable d) {
@@ -218,30 +246,62 @@ public class Downloader {
         }
     };
 
+    /**
+     * 暂停下载
+     */
     public void pause() {
         isPause = true;
     }
 
+    /**
+     * 重启下载
+     */
     public void restart() {
         download();
     }
 
+    /**
+     * 判断是暂停下载
+     *
+     * @return
+     */
     public boolean isPause() {
         return isPause;
     }
 
+    /**
+     * 判断是否完成下载
+     *
+     * @return
+     */
     public boolean isFinished() {
         return isFinished;
     }
 
+    /**
+     * 判断是否正在下载
+     *
+     * @return
+     */
     public boolean isDownloading() {
         return !isFinished && !isPause;
     }
 
+    /**
+     * 获取该Downloader的Url
+     *
+     * @return
+     */
     public String getUrl() {
         return url;
     }
 
+    /**
+     * 设置下载回调
+     *
+     * @param downloadCallback
+     * @return
+     */
     public Downloader setDownloadCallback(DownloadCallback downloadCallback) {
         this.downloadCallback = downloadCallback;
         return this;

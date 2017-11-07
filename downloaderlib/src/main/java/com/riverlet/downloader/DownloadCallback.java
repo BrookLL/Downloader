@@ -10,15 +10,19 @@ import java.io.File;
  */
 
 public abstract class DownloadCallback {
-    public void onProgress(String fileName,long total, long current, int percentage) {
+    //下载进度回调
+    public void onProgress(String fileName, long total, long current, int percentage) {
 
     }
 
+    //完成回调
     public abstract void onComplete(File file);
 
+    //失败回调
     public void onFailure() {
     }
 
-    public void onError(int errorCode,String errorMessage) {
+    //错误回调
+    public void onError(int errorCode, String errorMessage) {
     }
 }
