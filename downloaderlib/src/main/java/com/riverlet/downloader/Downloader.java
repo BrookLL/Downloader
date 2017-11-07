@@ -92,6 +92,9 @@ public class Downloader {
                 }
                 downloadCallback.onError(DownloadersStatusManager.ALREADY_EXIST, "文件已经存在");
                 break;
+            case DownloadersStatusManager.PAUSE:
+                realDownload(start,total);
+                break;
         }
 
         return this;
@@ -156,12 +159,15 @@ public class Downloader {
                             }
                             RecordManager.getInstance().put(url, offset);
                         }
+                        if (isPause){
+                            DownloadersStatusManager.put(url, DownloadersStatusManager.PAUSE);
+                        }
                     }
 
                 } else if (response.getCode() == FAILURE) {
                     emitter.onError(new Throwable("FAILURE"));
                 } else if (response.getCode() == ERROR) {
-                    emitter.onError(new Throwable("ERROR"+response.getMessage()));
+                    emitter.onError(new Throwable("ERROR" + response.getMessage()));
                 }
             }
         });
@@ -230,6 +236,10 @@ public class Downloader {
 
     public boolean isDownloading() {
         return !isFinished && !isPause;
+    }
+
+    public String getUrl() {
+        return url;
     }
 
     public Downloader setDownloadCallback(DownloadCallback downloadCallback) {

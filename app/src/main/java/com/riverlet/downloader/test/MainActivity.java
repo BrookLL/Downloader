@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bindView(R.id.btn_pause).setOnClickListener(this);
         bindView(R.id.btn_open).setOnClickListener(this);
 
-        final String sdcard = Environment.getExternalStorageDirectory().getPath()+File.separator;
+        final String sdcard = Environment.getExternalStorageDirectory().getPath() + File.separator;
 
         fileEdit.addTextChangedListener(new TextWatcher() {
             @Override
@@ -75,10 +75,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void afterTextChanged(Editable s) {
                 String path = s.toString();
-                if (!path.startsWith(sdcard)){
+                if (!path.startsWith(sdcard)) {
                     fileEdit.setText(sdcard);
                     fileEdit.setSelection(sdcard.length());
-                    Toast.makeText(MainActivity.this,"请设置正确的文件路径",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "请设置正确的文件路径", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btn_open:
                 File file = new File(DownloadConfig.getRootPath());
-                if(!file.exists()){
+                if (!file.exists()) {
                     file.mkdirs();
                 }
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -120,13 +120,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         File file = new File(fileEdit.getText().toString());
-        if (file.isDirectory()){
+        if (file.isDirectory()) {
             String fileName = url.substring(url.lastIndexOf('/') + 1);
-            file = new File(file,fileName);
+            file = new File(file, fileName);
             fileEdit.setText(file.getPath());
         }
 
-        downloader = Downloader.newDownloader(url,file);
+        if (downloader != null && TextUtils.equals(downloader.getUrl(), url)) {
+            downloader.restart();
+            return;
+        }
+        downloader = Downloader.newDownloader(url, file);
         downloader.setDownloadCallback(new DownloadCallback() {
             @Override
             public void onComplete(File file) {
@@ -145,12 +149,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Log.d("MainActivity", "percentage:" + percentage);
                 progressText.setText(percentage + "%");
                 progressBar.setProgress(percentage);
-                fileNameText.setText("文件名：" +fileName);
+                fileNameText.setText("文件名：" + fileName);
             }
 
             @Override
             public void onError(int errorCode, String errorMessage) {
-                Toast.makeText(MainActivity.this,errorMessage,Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
             }
         });
         downloader.download();

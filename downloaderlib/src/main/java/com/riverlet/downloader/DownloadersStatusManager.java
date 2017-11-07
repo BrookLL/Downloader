@@ -14,6 +14,7 @@ public class DownloadersStatusManager {
     public static final int READY = 101;
     public static final int DOWNLOADING = 102;
     public static final int ALREADY_EXIST = 103;
+    public static final int PAUSE = 104;
     private static Map<String, Integer> downloadStausMap = new HashMap<>();
 
     public static void put(String url, int status) {
