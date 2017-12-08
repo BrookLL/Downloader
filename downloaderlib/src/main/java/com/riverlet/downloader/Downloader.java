@@ -173,6 +173,8 @@ public class Downloader {
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
+                        DownloadersStatusManager.put(url, DownloadersStatusManager.PAUSE);
+                        isPause = true;
                     } finally {
                         inputStream.close();
                         randomAccessFile.close();
